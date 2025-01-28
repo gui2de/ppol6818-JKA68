@@ -11,7 +11,7 @@ Currently, I am a Global Health Institute Fellow, working under the Global Mater
 - Jungle Safari's 
 
 ## Check this out
-![Jungle Safari](/Users/jasnooranand/Downloads!)
+![Jungle Safari](https://raw.githubusercontent.com/gui2de/ppol6818-JKA68/mybiojka68/Jungle%20Safari.jpeg)
 
 ## Get to know me more 
 [Visit My Linkedin](https://www.linkedin.com/in/jasnoor-anand-3766a2209/)
