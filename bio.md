@@ -10,9 +10,8 @@ Currently, I am a Global Health Institute Fellow, working under the Global Mater
 - Playing Squash
 - Jungle Safari's 
 
-## What is kathak?
-Kathak is a classical dance form from India known for its intricate footwork, graceful movements, and storytelling through expressions.
-![Kathak Dance](https://images.app.goo.gl/sJrEtzgETvNwd1cE8)
+## Check this out
+![Jungle Safari](/Users/jasnooranand/Downloads!)
 
 ## Get to know me more 
 [Visit My Linkedin](https://www.linkedin.com/in/jasnoor-anand-3766a2209/)
