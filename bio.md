@@ -1,7 +1,7 @@
 # Jasnoor Kaur Anand 
 
 ## About Me 
-I am a first-year Master of International Development Policy (MIDP) student. Originally from Nagpur, Maharashtra, India, I completed my undergraduate degree in BSc Economics from the London School of Economics (LSE).
+I am a first-year Master of International Development Policy (MIDP) student at McCourt School of Public Policy, Georgetown Univeristy. Originally from Nagpur, Maharashtra, India, I completed my undergraduate degree in BSc Economics from the London School of Economics (LSE).
 
 Currently, I am a Global Health Institute Fellow, working under the Global Maternal and Child Health program, where I continue to deepen my knowledge of global health and development.
 
