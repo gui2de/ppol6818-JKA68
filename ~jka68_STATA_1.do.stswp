@@ -1,0 +1,429 @@
+**JASNOOR ANAND STATA ASSIGNMENT 1
+
+*Q1)
+
+clear
+
+global wd "/Users/matildecoelhodasilva/Desktop/Experimental Design/week_03/04_assignment/01_data/"
+
+cd "$wd"
+*(a)
+use "$wd/q1_data/student.dta", clear
+describe
+rename primary_teacher teacher // rename because there is no primary teacher in teacher.dta and to keep things simple
+merge m:1 teacher using "$wd/q1_data/teacher.dta", keepusing(school) // keepusing(school) ensures that we only bring in the school variable from teacher.dta into student.dta, instead of merging all variables from teacher.dta.
+drop if _merge == 1  // This removes any students in student.dta who do not have a matching school in school.dta. If a student's school is missing from school.dta, we can't know if it's in the South, so we remove those cases.
+drop _merge // Once we have cleaned the dataset, we no longer need _merge, so we delete it to keep our data clean.
+
+** Now that student.dta has the school variable, we can merge it with school.dta to get loc 
+
+merge m:1 school using "$wd/q1_data/school.dta", keepusing(loc)
+drop if _merge == 1  
+drop _merge
+
+** keeping only students in the south
+keep if loc == "South"
+sum attendance
+*answer:
+*   Variable |        Obs        Mean    Std. dev.       Min        Max
+*-------------+---------------------------------------------------------
+*  attendance |      1,181    177.4776    3.140854        158        180
+
+* The mean attendance is 177.47 
+
+
+*(b)
+use "$wd/q1_data/student.dta", clear
+rename primary_teacher teacher
+merge m:1 teacher using "$wd/q1_data/teacher.dta", keepusing(school subject)
+drop if _merge == 1
+drop _merge
+
+merge m:1 school using "$wd/q1_data/school.dta", keepusing(level)
+drop if _merge == 1
+drop _merge
+
+keep if level == "High"  // Keep only high school students
+
+merge m:1 subject using "$wd/q1_data/subject.dta", keepusing(tested)
+drop if _merge == 1
+drop _merge
+
+gen has_tested_teacher = (tested == 1)  //indicator for students with tested teachers
+sum has_tested_teacher
+*answer:
+*    Variable |        Obs        Mean    Std. dev.       Min        Max
+*-------------+---------------------------------------------------------
+*has_tested~r |      1,380     .442029     .496808          0          1
+
+*The proportion is 44.2%
+
+
+*(c)
+use "$wd/q1_data/school.dta", clear
+sum gpa
+*answer: 
+*    Variable |        Obs        Mean    Std. dev.       Min        Max
+*-------------+---------------------------------------------------------
+*         gpa |         12    3.604183    .2318724   2.974333   3.769334
+*The mean gpa is 3.604183
+
+
+
+*(d)
+use "$wd/q1_data/student.dta", clear
+rename primary_teacher teacher  
+
+merge m:1 teacher using "$wd/q1_data/teacher.dta", keepusing(school)
+drop if _merge == 1  
+drop _merge  
+
+merge m:1 school using "$wd/q1_data/school.dta", keepusing(level)
+drop if _merge == 1  
+drop _merge  
+
+keep if level == "Middle"
+
+collapse (mean) attendance, by(school)  // to replace the dataset with the grouped summary instead of individual level for each school
+
+list school attendance
+*answer:
+* +-------------------------------------------+
+*     |                         school   attend~e |
+*     |-------------------------------------------|
+*  1. |     Joseph Darby Middle School   177.4408 |
+*  2. |   Mahatma Ghandi Middle School   177.3344 |
+*  3. | Malala Yousafzai Middle School   177.5479 |
+*     +-------------------------------------------+
+
+*This gives the mean attendance of each middle school. There are 3 middle schools.
+
+*-----------------------------------------------------------------------------------------------------------------*
+*q2)
+**Notes for myself: 
+* 1. Pixel is spatial unit of analysis 
+* 2. The goal is to check if all households within a given pixel have the same payout status.
+* 3. If all payouts within a pixel are the same, set pixel_consistent = 1.
+* 4. If there is at least one household in the pixel with a different payout status, set pixel_consistent = 0
+
+use "$wd/q2_village_pixel", clear 
+
+bysort pixel (payout): egen min_payout = min(payout)
+bysort pixel (payout): egen max_payout = max(payout)
+gen pixel_consistent = (min_payout == max_payout)
+
+tab pixel_consistent
+*pixel_consi |
+*      stent |      Freq.     Percent        Cum.
+*------------+-----------------------------------
+*          1 |        958      100.00      100.00
+*------------+-----------------------------------
+*      Total |        958      100.00
+
+
+bysort village pixel: gen pixeltag = _n == 1
+bysort village: egen num_pixels = total(pixeltag)
+gen pixel_village = (num_pixels > 1)
+
+tab pixel_village
+*pixel_villa |
+*        ge |      Freq.     Percent        Cum.
+*------------+-----------------------------------
+*          0 |        834       87.06       87.06
+*          1 |        124       12.94      100.00
+*------------+-----------------------------------
+*      Total |        958      100.00
+
+
+
+bysort village (payout): egen min_payout_village = min(payout)
+bysort village (payout): egen max_payout_village = max(payout)
+
+gen village_category = 1
+replace village_category = 2 if pixel_village == 1 & (min_payout_village == max_payout_village)
+replace village_category = 3 if pixel_village == 1 & (min_payout_village != max_payout_village)
+
+tab village_category
+*village_cat |
+*      egory |      Freq.     Percent        Cum.
+*------------+-----------------------------------
+*          1 |        834       87.06       87.06
+*          2 |         50        5.22       92.28
+*          3 |         74        7.72      100.00
+*------------+-----------------------------------
+*      Total |        958      100.00
+
+
+save "q2_village_pixel_fixed.dta", replace
+
+
+*-----------------------------------------------------------------------------------------------------------------*
+*q3)
+*Notes for myself:
+*We are given 128 proposals, each reviewed by three different reviewers who assigned a score between 1 (lowest) and 5 (highest).
+*Normalize the scores per reviewer (netid) using the formula: Standardized Score = (Score − Mean of Reviewer)/Standard Deviation of Reviewer
+* following new columns:
+*stand_r1_score: Standardized score for reviewer 1.
+*stand_r2_score: Standardized score for reviewer 2.
+*stand_r3_score: Standardized score for reviewer 3.
+*average_stand_score: Average of the three standardized scores.
+*rank: Ranks the proposals where the highest score gets rank = 1 and the lowest gets rank = 128.
+*standardizing within each reviewer (netid), will allow all reviewers have a mean score of 0 and a consistent spread of scores.
+
+clear
+
+use "$wd/q3_proposal_review", clear 
+
+keep proposal_id Rewiewer1 Reviewer2 Reviewer3 Review1Score Reviewer2Score Reviewer3Score
+
+rename Rewiewer1 Reviewer1
+rename Reviewer1 Netid1
+rename Reviewer2 Netid2
+rename Reviewer3 Netid3
+
+rename Review1Score Score1
+rename Reviewer2Score Score2
+rename Reviewer3Score Score3
+
+
+reshape long Netid Score, i(proposal_id) j(reviewer)
+
+sort Netid proposal_id
+
+bysort Netid (proposal_id): egen mean_score = mean(Score)
+bysort Netid (proposal_id): egen sd_score = sd(Score)
+
+gen stand_score = (Score - mean_score) / sd_score
+
+drop mean_score sd_score // i had to drop because it showed error without dropping as variable mean_score not constant within proposal_id. And i also tried reshape error code and then it showed same thing that they are not constant. variable sd_score not constant within proposal_id
+
+
+reshape wide Netid Score stand_score, i(proposal_id) j(reviewer)
+
+egen average_stand_score = rowmean(stand_score1 stand_score2 stand_score3)
+
+* Create a ranking variable (highest score = 1, lowest = 128)
+egen rank = rank(average_stand_score), field
+
+
+*--------------------------------------------------------------------------------------------------------------------*
+**Q4)
+*Notes for myself:
+*We have 135 tables in an Excel file. Each table corresponds to a district and contains information about people who have computerized national ID cards. 
+*The problem is that the extracted data from OCR is messy, and I need to clean it. 
+*The goal is to extract the first row ("18 and above") from each table, keeping only columns 2-13.
+clear
+global wd "/Users/matildecoelhodasilva/Desktop/Experimental Design/week_03/04_assignment/01_data"
+global excel_t21 "$wd/q4_Pakistan_district_table21.xlsx"
+
+* Create a temporary file to store the cleaned data
+tempfile table21
+save `table21', replace emptyok 
+
+* Loop through all 135 sheets (districts)
+forvalues i=1/135 {
+    
+    * Import the sheet with all columns as strings to handle misalignment issues
+    capture import excel "$excel_t21", sheet("Table `i'") firstrow clear allstring 
+    
+    * Display loop iteration to track progress
+    display as error "Processing Table `i'"
+    
+    * Keep only the "18 AND ABOVE" row
+    keep if regexm(TABLE21PAKISTANICITIZEN1, "18 AND") == 1
+    keep in 1  
+    
+    * Generate district identifier
+    gen district_id = `i'
+
+    * Fix column misalignment: Identify where the actual numbers start
+    local first_col = ""
+    foreach var of varlist B C D E F G H I J K L M {
+        count if `var' != "" & !missing(`var')
+        if r(N) > 0 & "`first_col'" == "" {
+            local first_col "`var'"
+        }
+    }
+    
+    * Shift data to correct columns
+    foreach var of varlist B C D E F G H I J K L M {
+        replace `var' = `first_col' if `var' == "" & `first_col' != ""
+    }
+
+    * Rename variables to standard column names
+    rename B total_population
+    rename C cnic_obtained
+    rename D cnic_not_obtained
+    rename E male_total_population
+    rename F male_cnic_obtained
+    rename G male_cnic_not_obtained
+    rename H female_total_population
+    rename I female_cnic_obtained
+    rename J female_cnic_not_obtained
+    rename K transgender_total_population
+    rename L transgender_cnic_obtained
+    rename M transgender_cnic_not_obtained
+
+    * Clean numeric data by removing non-numeric characters
+    foreach var in total_population cnic_obtained cnic_not_obtained ///
+                  male_total_population male_cnic_obtained male_cnic_not_obtained ///
+                  female_total_population female_cnic_obtained female_cnic_not_obtained ///
+                  transgender_total_population transgender_cnic_obtained transgender_cnic_not_obtained {
+        replace `var' = subinstr(`var', ",", "", .)  // Remove commas
+        replace `var' = subinstr(`var', " ", "", .)  // Remove spaces
+        replace `var' = subinstr(`var', "-", "0", .) // Convert "-" to 0
+        destring `var', replace force  // Convert to numeric
+    }
+
+    * Append cleaned data to the master dataset
+    capture append using `table21'
+    save `table21', replace
+}
+
+* Load final cleaned dataset
+use `table21', clear
+
+* Ensure all extracted variables are numeric
+foreach var in total_population cnic_obtained cnic_not_obtained ///
+                  male_total_population male_cnic_obtained male_cnic_not_obtained ///
+                  female_total_population female_cnic_obtained female_cnic_not_obtained ///
+                  transgender_total_population transgender_cnic_obtained transgender_cnic_not_obtained {
+    capture confirm string variable `var'
+    if !_rc {
+        gen double `var'_num = real(`var') if regexm(`var', "^-?[0-9]+(\.[0-9]+)?")
+        count if missing(`var'_num) & !missing(`var')
+        if r(N) > 0 {
+            di as error "`var' contains non-numeric values that couldn't be converted."
+        }
+        drop `var'
+        rename `var'_num `var'
+    }
+}
+
+* Drop unnecessary variables
+*drop N O P Q R S T U V W X Y Z AA 
+
+* Arrange columns in order
+order TABLE21PAKISTANICITIZEN1 district_id total_population cnic_obtained cnic_not_obtained ///
+      male_total_population male_cnic_obtained male_cnic_not_obtained ///
+      female_total_population female_cnic_obtained female_cnic_not_obtained ///
+      transgender_total_population transgender_cnic_obtained transgender_cnic_not_obtained
+
+* Sort by district ID
+sort district_id
+
+drop cnic_obtained cnic_not_obtained male_cnic_obtained female_total_population female_cnic_not_obtained transgender_cnic_obtained
+rename male_total_population allsex_cni_card_obtained 
+rename male_cnic_not_obtained allsex_cni_card_not_obtained 
+rename female_cnic_obtained male_total_pop
+rename transgender_total_population male_cni_card_obtained
+rename transgender_cnic_not_obtained male_cni_card_not_obtained
+gen female_total_pop = O
+replace female_total_pop = N if missing(O)
+replace female_total_pop = P if missing(female_total_pop)
+gen female_cni_card_obtained = Q
+replace female_cni_card_obtained = P if missing(Q)
+gen female_cni_card_not_obtained = S
+replace female_cni_card_not_obtained = R if missing(S)
+gen transgender_total_population = U
+replace transgender_total_population = T if missing(U)
+gen trans_cni_obtained = W
+replace trans_cni_obtained = V if missing(W)
+gen trans_cni_not_obtained = Y
+replace trans_cni_not_obtained = X if missing(Y)
+replace female_total_pop = "234640" if district_id == 32
+replace female_total_pop = "9830" if district_id == 33
+replace female_total_pop = "472956" if district_id == 69 
+replace female_total_pop = "40976" if district_id == 121 
+replace male_cni_card_obtained = 215304 if district_id == 32
+replace male_cni_card_not_obtained = 13849 if district_id == 32
+replace female_cni_card_obtained = "157723" if district_id == 26
+replace female_cni_card_not_obtained = "46808" if district_id == 26
+replace male_cni_card_not_obtained = 1229 if district_id == 33
+replace male_cni_card_not_obtained = 2016 if district_id == 35
+replace female_total_pop = "31218" if district_id == 35
+replace female_total_pop = "17627" if district_id == 37
+
+
+drop N O P Q R S T U V W X Y Z AA AB AC
+
+sort district_id  
+
+destring female_total_pop female_cni_card_obtained female_cni_card_not_obtained transgender_total_population trans_cni_obtained trans_cni_not_obtained, replace ignore("-") force
+
+foreach var in female_total_pop female_cni_card_obtained female_cni_card_not_obtained transgender_total_population trans_cni_obtained trans_cni_not_obtained {
+    replace `var' = `var'[_n-1] if missing(`var')  
+}
+
+foreach var in female_total_pop female_cni_card_obtained female_cni_card_not_obtained transgender_total_population trans_cni_obtained trans_cni_not_obtained {
+    replace `var' = `var'[_n+1] if missing(`var')  
+}
+
+foreach var in female_total_pop female_cni_card_obtained female_cni_card_not_obtained transgender_total_population trans_cni_obtained trans_cni_not_obtained {
+    replace `var' = round((`var'[_n-1] + `var'[_n+1]) / 2) if missing(`var') & !missing(`var'[_n-1]) & !missing(`var'[_n+1])
+}
+
+destring female_total_pop female_cni_card_obtained female_cni_card_not_obtained transgender_total_population trans_cni_obtained trans_cni_not_obtained, replace ignore("-") force
+
+
+* Save final cleaned dataset
+save "$wd/Pakistan_district_cleaned.dta", replace
+*--------------------------------------------------------------------------------------------------------------------*
+*q5)
+clear
+
+use "$wd/q5_Tz_student_roster_html.dta", clear
+
+br s
+list s if regexm(s, "SCHOOL NAME|STUDENTS|WASTANI WA SHULE|NAFASI YA SHULE")
+
+gen s_length = strlen(s)
+
+list s_length
+
+list s if regexm(s, "[A-Za-z0-9]{5,}") 
+ 
+gen html_preview = substr(s, 1, 10000) 
+ 
+list html_preview
+
+gen html_full = substr(s, 1, 20000)  
+
+list html_full
+
+gen cleaned_html = regexr(s, "<[^>]+>", "")  
+
+replace cleaned_html = trim(cleaned_html) 
+ 
+list cleaned_html    
+
+gen school_data = substr(cleaned_html, strpos(cleaned_html, "ALBHEJIE PRIMARY SCHOOL"), .)
+list school_data
+
+gen num_students = .
+replace num_students = real(regexs(1)) if regexm(school_data, "WALIOFANYA MTIHANI *: ([0-9]+)")
+
+gen school_avg = .
+replace school_avg = real(regexs(1)) if regexm(school_data, "WASTANI WA SHULE *: ([0-9\.]+)")
+
+gen school_rank_council = .
+replace school_rank_council = real(regexs(1)) if regexm(school_data, "NAFASI YA SHULE KWENYE KUNDI LAKE KIHALMASHAURI *: ([0-9]+)")
+
+gen school_rank_region = .
+replace school_rank_region = real(regexs(1)) if regexm(school_data, "NAFASI YA SHULE KWENYE KUNDI LAKE KIMKOA *: ([0-9]+)")
+
+gen school_rank_national = .
+replace school_rank_national = real(regexs(1)) if regexm(school_data, "NAFASI YA SHULE KWENYE KUNDI LAKE KITAIFA *: ([0-9]+)")
+
+gen school_name = ""
+replace school_name = regexs(1) if regexm(school_data, "([A-Za-z ]+) - PS[0-9]+")
+
+gen school_code = ""
+replace school_code = regexs(1) if regexm(school_data, "(PS[0-9]+)")
+
+drop s s_length html_preview html_full cleaned_html school_data
+
+save tanzania_school_data_final.dta, replace
+
+
+
