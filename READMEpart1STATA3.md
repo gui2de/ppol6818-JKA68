@@ -70,14 +70,106 @@ Because the sample is so large, there's very little randomness or noise, so we c
 This happens because large samples reduce randomness and give us more accurate estimates of the true effect.
 
 ---
+
+# Part 2: Sampling Noise in an Infinite Superpopulation
+
+## Objective
+
+In Part 2, we look at how regression results behave when we keep randomly generating new samples from an infinite population. Each time, we draw a new dataset of a specific sample size, simulate the regression, and observe how the estimates change with larger and larger samples.
+
 ---
 
-## Stata Code Used
+## Data Generation and Simulation
 
-Below is the full Stata code used to generate the fixed population, run simulations, and graph results.
+Each simulated dataset follows the same logic as in Part 1:
+- 50% of observations are assigned to a treatment group
+- Control group has a mean of 100
+- Treatment group has a mean of 110
+- Standard deviation = 10
+
+The true treatment effect is again 10.
+
+For each of the 26 different sample sizes, we:
+- Randomly generated 500 datasets
+- Ran a regression of `dep_var` on `treatment`
+- Stored the beta estimate, standard error (SEM), and 95% confidence intervals
+
+Sample sizes included both powers of 2 and powers of 10:
+- Powers of 2 from 4 to 2,097,152
+- N = 10, 100, 1,000, 10,000, 100,000, and 1,000,000
+
+---
+
+## Summary Table
 
 <details>
-<summary>Click to expand full code</summary>
+<summary>Click to view full summary table</summary>
+
+
+| N       | Beta     | SEM      | CI Lower   | CI Upper   |
+|---------|----------|----------|------------|------------|
+| 4       | 10.85    | 9.86     | -31.56     | 53.26      |
+| 8       | 9.75     | 7.45     | -8.48      | 27.98      |
+| 10      | 10.41    | 6.49     | -4.55      | 25.38      |
+| 16      | 10.20    | 5.20     | -0.94      | 21.34      |
+| 32      | 9.74     | 3.57     | 2.46       | 17.03      |
+| 64      | 9.83     | 2.52     | 4.79       | 14.87      |
+| 100     | 10.01    | 2.00     | 6.04       | 13.98      |
+| 128     | 9.96     | 1.77     | 6.47       | 13.46      |
+| 256     | 9.92     | 1.25     | 7.47       | 12.38      |
+| 512     | 10.00    | 0.89     | 8.26       | 11.74      |
+| 1000    | 10.01    | 0.63     | 8.77       | 11.25      |
+| 1024    | 9.98     | 0.63     | 8.75       | 11.20      |
+| 2048    | 9.98     | 0.44     | 9.11       | 10.84      |
+| 4096    | 9.99     | 0.31     | 9.38       | 10.61      |
+| 8192    | 9.99     | 0.22     | 9.56       | 10.42      |
+| 10000   | 9.99     | 0.20     | 9.60       | 10.38      |
+| 16384   | 10.00    | 0.16     | 9.69       | 10.30      |
+| 32768   | 10.00    | 0.11     | 9.78       | 10.21      |
+| 65536   | 10.00    | 0.08     | 9.85       | 10.15      |
+| 100000  | 10.00    | 0.06     | 9.88       | 10.13      |
+| 131072  | 10.00    | 0.06     | 9.89       | 10.11      |
+| 262144  | 10.00    | 0.04     | 9.93       | 10.08      |
+| 524288  | 9.99     | 0.03     | 9.95       | 10.05      |
+| 1000000 | 10.00    | 0.02     | 9.96       | 10.04      |
+| 1048576 | 10.00    | 0.02     | 9.96       | 10.04      |
+| 2097152 | 10.00    | 0.01     | 9.97       | 10.03      |
+
+
+</details>
+
+
+---
+
+## Graph of Beta Estimates and Confidence Intervals
+
+The graph below shows how the estimated beta values (blue bars) and their 95% confidence intervals (gray lines) behave as sample size increases:
+
+![Beta Estimates with 95% CI by Sample Size (N)](part2_ci_plot.png)
+
+---
+
+## Interpretation
+
+When the sample size is very small, like N = 4 or 8, the regression results are very unreliable. In some cases, the estimates are either missing or exactly zero. This happens because the sample is too small, and sometimes the treatment and control groups don’t have enough variation to run a proper regression. That’s why I replaced beta = 0 with missing (.) to clean the data.
+
+As the sample size gets larger:
+- The beta estimates move closer to the true effect (around 10)
+- The standard error (SEM) becomes smaller
+- The confidence intervals get tighter and more stable
+
+By the time the sample size reaches 1,000 or more, the estimates are very accurate. The beta values stay close to 10, and the confidence intervals are very narrow. For very large samples like N = 100,000 or more, the results barely change at all — they are very consistent and precise.
+
+This shows that:
+- Small samples can give messy or random results
+- Big samples help us get closer to the true effect
+- Drawing new data each time from an infinite population gives more flexibility than using a fixed dataset (like in Part 1)
+
+---
+## Stata Code Used
+
+<details>
+<summary>Click to expand full Part 1 & 2 code</summary>
 
 ```stata
 *--------------------------------------------------*
@@ -87,12 +179,15 @@ clear
 set seed 12345  
 set obs 10000   
 
+
 gen rand = runiform()
 gen treatment = (rand < 0.5)
+
 
 local m1 = 100   // mean for control
 local m2 = 110   // mean for treatment
 local sd = 10    // same standard deviation for both
+
 
 gen dep_var = rnormal(`m1', `sd') if treatment == 0
 replace dep_var = rnormal(`m2', `sd') if treatment == 1
@@ -113,6 +208,7 @@ program define sample_regression, rclass
 	
     mat a = r(table)
 
+    
     return scalar N = `N'
     return scalar beta = a[1,1]  // Coefficient of treatment
     return scalar sem = a[2,1]   // Standard Error
@@ -193,115 +289,11 @@ histogram beta, bin(30) normal ///
 graph combine h10 h100 h1000 h10000, ///
     title("Beta Estimates Across Different Sample Sizes") ///
     cols(2)
+
 save "final_results.dta", replace
 
+PART2
 
-
----
----
-
-# Part 2: Sampling Noise in an Infinite Superpopulation
-
-## Objective
-
-In Part 2, we look at how regression results behave when we keep randomly generating new samples from an infinite population. Each time, we draw a new dataset of a specific sample size, simulate the regression, and observe how the estimates change with larger and larger samples.
-
----
-
-## Data Generation and Simulation
-
-Each simulated dataset follows the same logic as in Part 1:
-- 50% of observations are assigned to a treatment group
-- Control group has a mean of 100
-- Treatment group has a mean of 110
-- Standard deviation = 10
-
-The true treatment effect is again 10.
-
-For each of the 26 different sample sizes, we:
-- Randomly generated 500 datasets
-- Ran a regression of `dep_var` on `treatment`
-- Stored the beta estimate, standard error (SEM), and 95% confidence intervals
-
-Sample sizes included both powers of 2 and powers of 10:
-- Powers of 2 from 4 to 2,097,152
-- N = 10, 100, 1,000, 10,000, 100,000, and 1,000,000
-
----
-
-## Summary Table
-
-<details>
-<summary>Click to view full summary table</summary>
-
-<!-- 
-
-| N       | Beta     | SEM      | CI Lower   | CI Upper   |
-|---------|----------|----------|------------|------------|
-| 4       | 10.85    | 9.86     | -31.56     | 53.26      |
-| 8       | 9.75     | 7.45     | -8.48      | 27.98      |
-| 10      | 10.41    | 6.49     | -4.55      | 25.38      |
-| 16      | 10.20    | 5.20     | -0.94      | 21.34      |
-| 32      | 9.74     | 3.57     | 2.46       | 17.03      |
-| 64      | 9.83     | 2.52     | 4.79       | 14.87      |
-| 100     | 10.01    | 2.00     | 6.04       | 13.98      |
-| 128     | 9.96     | 1.77     | 6.47       | 13.46      |
-| 256     | 9.92     | 1.25     | 7.47       | 12.38      |
-| 512     | 10.00    | 0.89     | 8.26       | 11.74      |
-| 1000    | 10.01    | 0.63     | 8.77       | 11.25      |
-| 1024    | 9.98     | 0.63     | 8.75       | 11.20      |
-| 2048    | 9.98     | 0.44     | 9.11       | 10.84      |
-| 4096    | 9.99     | 0.31     | 9.38       | 10.61      |
-| 8192    | 9.99     | 0.22     | 9.56       | 10.42      |
-| 10000   | 9.99     | 0.20     | 9.60       | 10.38      |
-| 16384   | 10.00    | 0.16     | 9.69       | 10.30      |
-| 32768   | 10.00    | 0.11     | 9.78       | 10.21      |
-| 65536   | 10.00    | 0.08     | 9.85       | 10.15      |
-| 100000  | 10.00    | 0.06     | 9.88       | 10.13      |
-| 131072  | 10.00    | 0.06     | 9.89       | 10.11      |
-| 262144  | 10.00    | 0.04     | 9.93       | 10.08      |
-| 524288  | 9.99     | 0.03     | 9.95       | 10.05      |
-| 1000000 | 10.00    | 0.02     | 9.96       | 10.04      |
-| 1048576 | 10.00    | 0.02     | 9.96       | 10.04      |
-| 2097152 | 10.00    | 0.01     | 9.97       | 10.03      |
- -->
-
-</details>
-
-
----
-
-## Graph of Beta Estimates and Confidence Intervals
-
-The graph below shows how the estimated beta values (blue bars) and their 95% confidence intervals (gray lines) behave as sample size increases:
-
-![Beta Estimates with 95% CI by Sample Size (N)](part2_ci_plot.png)
-
----
-
-## Interpretation
-
-When the sample size is very small, like N = 4 or 8, the regression results are very unreliable. In some cases, the estimates are either missing or exactly zero. This happens because the sample is too small, and sometimes the treatment and control groups don’t have enough variation to run a proper regression. That’s why I replaced beta = 0 with missing (.) to clean the data.
-
-As the sample size gets larger:
-- The beta estimates move closer to the true effect (around 10)
-- The standard error (SEM) becomes smaller
-- The confidence intervals get tighter and more stable
-
-By the time the sample size reaches 1,000 or more, the estimates are very accurate. The beta values stay close to 10, and the confidence intervals are very narrow. For very large samples like N = 100,000 or more, the results barely change at all — they are very consistent and precise.
-
-This shows that:
-- Small samples can give messy or random results
-- Big samples help us get closer to the true effect
-- Drawing new data each time from an infinite population gives more flexibility than using a fixed dataset (like in Part 1)
-
----
-## Stata Code Used
-
-<details>
-<summary>Click to expand full Part 2 code</summary>
-
-```stata
 clear
 capture program drop infinite_regression
 program define infinite_regression, rclass
