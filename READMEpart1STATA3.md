@@ -70,3 +70,128 @@ Because the sample is so large, there's very little randomness or noise, so we c
 This happens because large samples reduce randomness and give us more accurate estimates of the true effect.
 
 ---
+---
+
+## Stata Code Used
+
+Below is the full Stata code used to generate the fixed population, run simulations, and graph results.
+
+<details>
+<summary>Click to expand full code</summary>
+
+```stata
+*--------------------------------------------------*
+* Step 1: Create a fixed population and save it   *
+*--------------------------------------------------*
+clear
+set seed 12345  
+set obs 10000   
+
+gen rand = runiform()
+gen treatment = (rand < 0.5)
+
+local m1 = 100   // mean for control
+local m2 = 110   // mean for treatment
+local sd = 10    // same standard deviation for both
+
+gen dep_var = rnormal(`m1', `sd') if treatment == 0
+replace dep_var = rnormal(`m2', `sd') if treatment == 1
+
+save "fixed_population.dta", replace
+
+*--------------------------------------------------*
+* Step 2: Define a program to sample and regress  *
+*--------------------------------------------------*
+capture program drop sample_regression
+program define sample_regression, rclass
+    args N  
+
+    use "fixed_population.dta", clear  
+    sample `N', count  
+
+    regress dep_var treatment
+	
+    mat a = r(table)
+
+    return scalar N = `N'
+    return scalar beta = a[1,1]  // Coefficient of treatment
+    return scalar sem = a[2,1]   // Standard Error
+    return scalar p_value = a[4,1]  // P-value
+    return scalar ci_lower = a[5,1]
+    return scalar ci_upper = a[6,1]
+end
+
+* Testing the program
+sample_regression 100
+return list
+
+*--------------------------------------------------*
+* Step 3: Run simulations for different N values  *
+*--------------------------------------------------*
+clear
+set seed 12345
+
+local reps 500
+local N_list 10 100 1000 10000
+
+foreach N in `N_list' {
+    display "Running simulations for sample size: `N'"
+
+    simulate N=r(N) beta=r(beta) sem=r(sem) p_value=r(p_value) ///
+        ci_lower=r(ci_lower) ci_upper=r(ci_upper), reps(`reps'): ///
+        sample_regression `N'
+
+    save "sim_results_`N'.dta", replace  
+}
+
+*--------------------------------------------------*
+* Step 4: Combine, summarize, and graph results   *
+*--------------------------------------------------*
+clear
+set more off
+
+use "sim_results_10.dta", clear
+append using "sim_results_100.dta"
+append using "sim_results_1000.dta"
+append using "sim_results_10000.dta"
+
+save "sim_results_all.dta", replace
+
+use "sim_results_all.dta", clear 
+
+collapse (mean) beta sem ci_lower ci_upper, by(N)
+list  
+
+rename beta beta_part1
+rename sem sem_part1
+rename ci_lower ci_lower_part1
+rename ci_upper ci_upper_part1
+
+* Save the summary
+save part1_summary.dta, replace
+	
+* N = 10
+use "sim_results_10.dta", clear
+histogram beta, bin(30) normal ///
+    title("N = 10") xtitle("Beta") name(h10, replace)
+
+* N = 100
+use "sim_results_100.dta", clear
+histogram beta, bin(30) normal ///
+    title("N = 100") xtitle("Beta") name(h100, replace)
+
+* N = 1000
+use "sim_results_1000.dta", clear
+histogram beta, bin(30) normal ///
+    title("N = 1000") xtitle("Beta") name(h1000, replace)
+
+* N = 10000
+use "sim_results_10000.dta", clear
+histogram beta, bin(30) normal ///
+    title("N = 10000") xtitle("Beta") name(h10000, replace)
+	
+graph combine h10 h100 h1000 h10000, ///
+    title("Beta Estimates Across Different Sample Sizes") ///
+    cols(2)
+
+save "final_results.dta", replace
