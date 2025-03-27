@@ -45,6 +45,7 @@ Simulations were repeated **500 times each** for sample sizes:
 
 ## Histogram of Beta Estimates
 
+[View Beta Estimates Graph (PDF)](beta_estimates_graph.pdf)
 As sample size increases:
 - Beta estimates become more tightly centered around 10
 - SEM and confidence intervals shrink
