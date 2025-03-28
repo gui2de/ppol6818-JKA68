@@ -147,6 +147,16 @@ The graph below shows how the estimated beta values (blue bars) and their 95% co
 
 [View Beta Estimates Graph (PDF)](part2_graph.pdf)
 
+This graph shows how the beta estimates and their 95% confidence intervals change as the sample size (N) increases.
+
+On the left side (small N like 4, 8, 16), the blue bars (beta estimates) vary a lot, and the gray error bars (confidence intervals) are very wide. This means the estimates are noisy and not reliable.
+
+As the sample size gets larger (moving right), the beta estimates become much more stable and closer to the true effect of 10.
+
+The gray error bars shrink with larger samples, showing that the confidence intervals are getting tighter. This means we are more confident in our estimates.
+
+For very large N (like 10,000 or 1,000,000), the beta estimate is almost always around 10, and the error bars are very small. This shows high precision and low sampling noise.
+
 
 ---
 
@@ -167,6 +177,92 @@ This shows that:
 - Drawing new data each time from an infinite population gives more flexibility than using a fixed dataset (like in Part 1)
 
 ---
+## Part 1 vs Part 2: Comparison and Explanation
+
+### Why Can We Use Larger Samples in Part 2?
+
+In **Part 1**, we created a fixed population of 10,000 individuals. Since we were sampling from that same dataset each time, we couldn’t take samples larger than 10,000.
+
+In **Part 2**, we simulated data from an **infinite superpopulation** — meaning we generated new data each time. This let us draw very large samples (up to 2 million observations) because we weren't limited by a fixed dataset.
+
+---
+
+### Why Are SEM and Confidence Intervals Different?
+
+At the same sample sizes (e.g., N = 100 or N = 1,000), **Part 2 typically gives smaller standard errors (SEM)** and **narrower confidence intervals** compared to Part 1. This is because:
+
+- In **Part 2**, each sample is independently generated from the population, so the randomness averages out more cleanly.
+- In **Part 1**, we are reusing the same dataset, which means sampling variability can be affected by quirks in that fixed population.
+
+---
+
+### Comparison Table (Part 1 vs Part 2)
+
+<details>
+<summary>Click to expand the full table</summary>
+
+| N       | Source | Mean Beta | SEM     | 95% CI (Lower – Upper)      |
+|---------|--------|-----------|---------|------------------------------|
+| 4       | Part 2 | 10.850    | 9.856   | -31.56 to 53.26             |
+| 8       | Part 2 | 9.749     | 7.451   | -8.48 to 27.98              |
+| 10      | Part 1 | 9.381     | 6.534   | -5.67 to 24.47              |
+| 10      | Part 2 | 10.413    | 6.490   | -4.55 to 25.38              |
+| 16      | Part 2 | 10.199    | 5.195   | -0.94 to 21.34              |
+| 32      | Part 2 | 9.745     | 3.567   | 2.46 to 17.03               |
+| 64      | Part 2 | 9.833     | 2.522   | 4.79 to 14.87               |
+| 100     | Part 1 | 9.691     | 1.994   | 5.73 to 13.65               |
+| 100     | Part 2 | 10.010    | 1.999   | 6.04 to 13.98               |
+| 128     | Part 2 | 9.962     | 1.767   | 6.47 to 13.46               |
+| 256     | Part 2 | 9.924     | 1.249   | 7.47 to 12.38               |
+| 512     | Part 2 | 10.000    | 0.885   | 8.26 to 11.74               |
+| 1000    | Part 1 | 9.902     | 0.632   | 8.66 to 11.14               |
+| 1000    | Part 2 | 10.010    | 0.633   | 8.77 to 11.25               |
+| 1024    | Part 2 | 9.976     | 0.626   | 8.75 to 11.20               |
+| 2048    | Part 2 | 9.976     | 0.442   | 9.11 to 10.84               |
+| 4096    | Part 2 | 9.995     | 0.313   | 9.38 to 10.61               |
+| 8192    | Part 2 | 9.989     | 0.221   | 9.56 to 10.42               |
+| 10000   | Part 1 | 9.910     | 0.200   | 9.52 to 10.30               |
+| 10000   | Part 2 | 9.988     | 0.199   | 9.60 to 10.38               |
+| 16384   | Part 2 | 9.997     | 0.156   | 9.69 to 10.30               |
+| 32768   | Part 2 | 9.998     | 0.110   | 9.78 to 10.21               |
+| 65536   | Part 2 | 9.999     | 0.078   | 9.85 to 10.15               |
+| 100000  | Part 2 | 10.005    | 0.063   | 9.88 to 10.13               |
+| 131072  | Part 2 | 10.000    | 0.055   | 9.89 to 10.11               |
+| 262144  | Part 2 | 10.002    | 0.039   | 9.93 to 10.08               |
+| 524288  | Part 2 | 9.999     | 0.028   | 9.95 to 10.05               |
+| 1000000 | Part 2 | 9.999     | 0.020   | 9.96 to 10.04               |
+| 1048576 | Part 2 | 10.001    | 0.020   | 9.96 to 10.04               |
+| 2097152 | Part 2 | 9.999     | 0.014   | 9.97 to 10.03               |
+
+</details>
+
+---
+
+### Visual Comparison
+
+#### Mean Beta Estimates at Key Sample Sizes
+
+![Mean Beta Comparison](mean_beta_compare.png)
+
+> This chart shows how both Part 1 and Part 2 estimates approach the true beta (10) as N increases. Part 2 tends to converge faster and stay more consistent.
+
+---
+
+#### SEM by Sample Size (Log Scale)
+
+![SEM Comparison](sem_compare.png)
+
+> SEM decreases as N increases in both parts. However, Part 2 consistently has a **slightly smaller SEM**, especially at a larger N, due to sampling from an ideal population.
+
+---
+
+### Summary
+- In Part 1, we could only sample from a fixed group of 10,000 people, so we were limited in how big our samples could be.
+- In Part 2, we were able to create new data each time, so we could test much bigger sample sizes—even millions.
+- In Part 2, the results were a little more stable and the standard errors were smaller because the samples were freshly generated each time.
+
+Both parts clearly show that bigger sample sizes lead to more accurate and reliable estimates.
+
 ## Stata Code Used
 
 <details>
@@ -378,3 +474,57 @@ twoway ///
     xlabel(1(1)26, valuelabel angle(45)) ///
     legend(off)
 
+PART 1 VS PART 2
+
+use "part1_summary.dta", clear
+collapse (mean) beta sem ci_lower ci_upper, by(N)
+gen source = "Part1"
+save "summary_part1.dta", replace
+
+use "part2_summary.dta", clear
+collapse (mean) beta sem ci_lower ci_upper, by(N)
+gen source = "Part2"
+save "summary_part2.dta", replace
+
+use "summary_part1.dta", clear
+append using "summary_part2.dta"
+sort N source
+save "comparison_summary.dta", replace
+
+rename beta_part1 beta
+rename beta_part2 beta
+
+gen beta_all = beta
+replace beta_all = beta_part2 if missing(beta_all)
+
+gen sem_all = sem_part1
+replace sem_all = sem_part2 if missing(sem_all)
+
+gen ci_lower_all = ci_lower_part1
+replace ci_lower_all = ci_lower_part2 if missing(ci_lower_all)
+
+gen ci_upper_all = ci_upper_part1
+replace ci_upper_all = ci_upper_part2 if missing(ci_upper_all)
+
+drop beta sem_part1 ci_lower_part1 ci_upper_part1 beta_part2 sem_part2 ci_lower_part2 ci_upper_part2
+
+graph bar beta_all if inlist(N, 10, 100, 1000, 10000, 100000, 1000000), ///
+    over(source) over(N, label(angle(0))) ///
+    bar(1, color(blue)) bar(2, color(gs12)) ///
+    legend(label(1 "Part 1") label(2 "Part 2")) ///
+    title("Mean Beta Estimates at Key Sample Sizes") ///
+    ytitle("Mean Beta")
+	
+twoway (line sem_all N if source == "Part1", lcolor(blue) lpattern(solid)) ///
+       (line sem_all N if source == "Part2", lcolor(red) lpattern(dash)), ///
+       legend(label(1 "Part 1") label(2 "Part 2")) ///
+       title("Standard Error by Sample Size") ///
+       xlabel(10 100 1000 10000 100000 1000000, angle(0)) ///
+       ytitle("Mean SEM") xtitle("Sample Size") xscale(log)
+
+graph bar sem_all if inlist(N, 10, 100, 1000, 10000, 100000, 1000000), ///
+    over(source) over(N, label(angle(0))) ///
+    bar(1, color(navy)) bar(2, color(maroon)) ///
+    legend(label(1 "Part 1") label(2 "Part 2")) ///
+    title("Mean Standard Error at Key Sample Sizes") ///
+    ytitle("Mean SEM")
