@@ -145,7 +145,7 @@ Sample sizes included both powers of 2 and powers of 10:
 
 The graph below shows how the estimated beta values (blue bars) and their 95% confidence intervals (gray lines) behave as sample size increases:
 
-[View Beta Estimates Graph (PDF)](part2_graph.pdf)
+[View Beta Estimates & Confidence Intervals (PDF)](part2_graph.pdf)
 
 This graph shows how the beta estimates and their 95% confidence intervals change as the sample size (N) increases.
 
@@ -242,7 +242,7 @@ At the same sample sizes (e.g., N = 100 or N = 1,000), **Part 2 typically gives 
 
 #### Mean Beta Estimates at Key Sample Sizes
 
-![Mean Beta Comparison](mean_beta_compare.png)
+[MEAN BETA ESTIMATE (PDF)](combined_graph.pdf)
 
 > This chart shows how both Part 1 and Part 2 estimates approach the true beta (10) as N increases. Part 2 tends to converge faster and stay more consistent.
 
@@ -250,7 +250,7 @@ At the same sample sizes (e.g., N = 100 or N = 1,000), **Part 2 typically gives 
 
 #### SEM by Sample Size (Log Scale)
 
-![SEM Comparison](sem_compare.png)
+[ SEM COMPARISON (PDF)](SEM_COMBINED_LINE_GRAPH.pdf)
 
 > SEM decreases as N increases in both parts. However, Part 2 consistently has a **slightly smaller SEM**, especially at a larger N, due to sampling from an ideal population.
 
