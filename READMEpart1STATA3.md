@@ -145,7 +145,7 @@ Sample sizes included both powers of 2 and powers of 10:
 
 The graph below shows how the estimated beta values (blue bars) and their 95% confidence intervals (gray lines) behave as sample size increases:
 
-[Click here to view the Part 2 Graph (PDF)]((./part2_graph.pdf)
+[Click here to view the Part 2 Graph (PDF)]((part2_graph.pdf)
 
 
 ---
